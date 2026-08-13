@@ -1,0 +1,270 @@
+{
+  "$schema": "./schema.json",
+  "catalogVersion": "0.1.0",
+  "queries": [
+    {
+      "id": "missing-from-servicenow",
+      "title": "Assets Missing from ServiceNow",
+      "category": "CMDB Reconciliation",
+      "query": "Providers NOTIN [\"ServiceNow\"]",
+      "description": "Finds any asset type with no ServiceNow record at all, regardless of ownership or device class — the broadest CMDB-completeness check in the set. Not devices that are wrong in ServiceNow, but devices that are entirely absent from it.",
+      "bestUsedFor": "Broad CMDB-hygiene conversations — a strong opener for customers who haven't questioned their CMDB's completeness.",
+      "tags": ["cmdb", "servicenow", "coverage", "opener"],
+      "requiresProviders": ["ServiceNow"],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "managed-fleet-missing-servicenow",
+      "title": "Assets in EDR/MDM Fleet but Not in ServiceNow",
+      "savedFilterName": "EDR/MDM Fleet Not in ServiceNow",
+      "category": "CMDB Reconciliation",
+      "query": "Type IN [\"Laptop\", \"Workstation\"] AND Providers CONTAINS \"CrowdStrike Falcon\" AND (Providers CONTAINS \"Microsoft Intune\" OR Providers CONTAINS \"Jamf Pro\") AND Providers NOTIN [\"ServiceNow\"]",
+      "description": "Finds laptops and workstations that are already confirmed, managed devices — covered by CrowdStrike for security and by Intune or Jamf for device management — yet have no record in ServiceNow at all. Unlike a generic missing-from-CMDB check, this rules out the 'maybe it's just noise' objection: these are devices your own security and MDM stack already trusts.",
+      "bestUsedFor": "CMDB-completeness conversations with IT and security leaders who assume anything actively managed is automatically tracked in ServiceNow.",
+      "tags": ["cmdb", "servicenow", "edr", "mdm", "crowdstrike", "intune", "jamf"],
+      "requiresProviders": ["ServiceNow", "CrowdStrike Falcon"],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "retired-cmdb-active-network",
+      "title": "Asset Marked as Retired in CMDB but Seen on the Network",
+      "savedFilterName": "Retired in CMDB, Seen on Network",
+      "category": "CMDB Reconciliation",
+      "query": "servicenow.servicenow_computers.install_status = \"retired\" AND asset.LastSeen AFTERDATE {{param:seenSince}}",
+      "description": "Cross-references ServiceNow's CMDB lifecycle status with real-time network telemetry, flagging any device marked Retired that is still active on the network. A retired device is off the patch schedule, off the vulnerability scan roster, and has no assigned owner — but if it's still connected, it's a live, unmonitored attack surface.",
+      "bestUsedFor": "IT Asset Management and CMDB-hygiene conversations — especially customers confident their CMDB is accurate. Requires two independent systems to agree, which a single provider console can't replicate on its own.",
+      "proof": "Open one matching asset, expand its ServiceNow raw attributes, and point at install_status plus last_discovered — the two fields that produced the match.",
+      "tags": ["cmdb", "servicenow", "lifecycle", "telemetry", "ghost-assets"],
+      "requiresProviders": ["ServiceNow"],
+      "params": [
+        {
+          "name": "seenSince",
+          "label": "Seen on the network since (days ago)",
+          "type": "relativeDate",
+          "default": -14,
+          "min": -365,
+          "max": -1
+        }
+      ],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "byod-personal-devices",
+      "title": "BYOD / Personal Devices",
+      "category": "Shadow IT",
+      "query": "Type IN [\"Laptop\", \"Workstation\", \"Smartphone\", \"Tablet\"] AND Providers NOTIN [\"CrowdStrike Falcon\", \"ServiceNow\", \"Tenable\", \"Jamf Pro\", \"Microsoft Intune\"]",
+      "description": "Finds laptops, workstations, smartphones and tablets — the device types people actually bring to work — that show zero presence across five core providers at once: CrowdStrike Falcon, ServiceNow, Tenable, Jamf Pro, and Microsoft Intune. A device this invisible was never enrolled anywhere, which is the clearest signal of a personal device connecting to corporate resources.",
+      "bestUsedFor": "BYOD and shadow-IT visibility conversations — customers who want to know what's connecting to their network outside of every managed channel.",
+      "tags": ["byod", "shadow-it", "unmanaged", "coverage"],
+      "requiresProviders": [],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "windows-macos-eol",
+      "title": "Windows and macOS End-of-Life Devices",
+      "category": "Lifecycle & Patch Hygiene",
+      "query": "(OperatingSystem IS [\"Windows 11\"] AND OSVersion = \"{{param:winVersion}}\") OR (OperatingSystem CONTAINS \"macOS\" AND OSVersion IS \"{{param:macVersion}}\")",
+      "description": "Combines the Windows 11 build-level lifecycle check with the macOS point-release check into one cross-platform query, using normalised OS and version fields across both providers. Shows lifecycle risk on the whole fleet instead of one platform at a time.",
+      "bestUsedFor": "Windows and Apple lifecycle / patch-hygiene conversations — customers running mixed fleets who track OS upgrades platform by platform today.",
+      "tags": ["lifecycle", "eol", "patching", "windows", "macos", "cross-platform"],
+      "requiresProviders": [],
+      "params": [
+        {
+          "name": "winVersion",
+          "label": "Windows 11 build to flag",
+          "type": "string",
+          "default": "22H2"
+        },
+        {
+          "name": "macVersion",
+          "label": "macOS version to flag",
+          "type": "string",
+          "default": "13.7.8"
+        }
+      ],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "disk-encryption-off",
+      "title": "Corporate Managed Laptops with Disk Encryption Off",
+      "savedFilterName": "Laptops with Disk Encryption Off",
+      "category": "Compliance",
+      "query": "(intune.intune_managed_devices.device_health_attestation_state.bitLockerStatus = \"PROTECTION_OFF\") OR (jamf.jamf_computers_inventory.disk_encryption.bootPartitionEncryptionDetails.partitionFileVault2State != \"ENCRYPTED\")",
+      "description": "Combines Jamf's FileVault state for Macs with Intune's BitLocker protection state for Windows into a single cross-provider query — one filter covering both platforms instead of two separate checks. Full-disk encryption is a regulatory baseline; MDM enrollment alone doesn't guarantee it's actually turned on.",
+      "bestUsedFor": "Compliance-driven conversations (PCI-DSS, HIPAA, SOC 2, ISO 27001) with regulated customers running mixed Mac and Windows fleets.",
+      "proof": "Open a Jamf-discovered asset and find partitionFileVault2State: NOT_ENCRYPTED in its raw attributes; open an Intune-discovered asset and find bitLockerStatus: PROTECTION_OFF.",
+      "tags": ["compliance", "encryption", "bitlocker", "filevault", "intune", "jamf", "cross-platform"],
+      "requiresProviders": ["Microsoft Intune", "Jamf Pro"],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "crowdstrike-firewall-prevention-off",
+      "title": "CrowdStrike Firewall Not Running and Prevention Policy Not Applied",
+      "savedFilterName": "CS Firewall + Prevention Off",
+      "category": "Security Control Gaps",
+      "query": "crowdstrike_falcon.crowdstrike_falcon_devices.device_policies.prevention.applied != \"true\" AND crowdstrike_falcon.crowdstrike_falcon_devices.device_policies.firewall.applied != \"true\"",
+      "description": "Stacks two raw CrowdStrike policy attributes — firewall and prevention (real-time malware and threat blocking) — to isolate devices where both controls are inactive at once. A device missing both is a completely unprotected endpoint hiding inside your EDR tool.",
+      "bestUsedFor": "Technical validation calls and POCs with security architects who want proof of compound, cross-attribute querying.",
+      "proof": "Open one matching asset and confirm both prevention.applied and firewall.applied show false in the CrowdStrike raw attributes.",
+      "tags": ["edr", "crowdstrike", "policy", "security-gap", "compound"],
+      "requiresProviders": ["CrowdStrike Falcon"],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "enriched-assets",
+      "title": "Enriched Assets (4+ Providers)",
+      "category": "Asset Enrichment",
+      "query": "asset.Providers.size >= 4",
+      "description": "Finds highly correlated assets seen across four or more contributing providers. These are the records where UAI's multi-source reconciliation is working at full depth — ideal for showing what a unified asset record looks like when all integrations are firing.",
+      "bestUsedFor": "Unified inventory and multi-source validation story — showing customers what full asset correlation looks like in practice.",
+      "tags": ["enrichment", "correlation", "multi-source", "providers"],
+      "requiresProviders": [],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "windows-11-eol",
+      "title": "Windows 11 End-of-Life Devices (22H2)",
+      "category": "Lifecycle & Patch Hygiene",
+      "query": "asset.OperatingSystem IS [\"Windows 11\"] and asset.OSVersion = \"22H2\"",
+      "description": "Finds Windows 11 assets on the 22H2 release to support end-of-support lifecycle conversations. 22H2 reached end of support in October 2024.",
+      "bestUsedFor": "Windows lifecycle risk and upgrade-priority story — customers who haven't moved off 22H2.",
+      "tags": ["lifecycle", "eol", "windows", "patching"],
+      "requiresProviders": [],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "windows-11-nearing-eol",
+      "title": "Windows 11 Nearing End of Life (23H2)",
+      "category": "Lifecycle & Patch Hygiene",
+      "query": "asset.OperatingSystem IS [\"Windows 11\"] and asset.OSVersion = \"23H2\"",
+      "description": "Finds Windows 11 assets on the 23H2 release to show assets approaching end of support. Use alongside the 22H2 filter to show the full near-term Windows upgrade backlog.",
+      "bestUsedFor": "Lifecycle planning and near-term remediation story — customers approaching their next required Windows upgrade.",
+      "tags": ["lifecycle", "eol", "windows", "patching", "planning"],
+      "requiresProviders": [],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "macos-eol",
+      "title": "macOS End-of-Life Devices",
+      "category": "Lifecycle & Patch Hygiene",
+      "query": "asset.OperatingSystem CONTAINS \"macOS\" AND asset.OSVersion IS \"13.7.8\"",
+      "description": "Finds macOS devices on the Ventura 13.7.x baseline — the last release before Apple dropped security support. Pair with the Windows EOL filter for a cross-platform lifecycle view.",
+      "bestUsedFor": "Apple lifecycle and patch-hygiene story — customers running mixed fleets who manage Mac upgrades separately.",
+      "tags": ["lifecycle", "eol", "macos", "apple", "patching"],
+      "requiresProviders": [],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "apple-missing-mdm",
+      "title": "Apple Fleet Missing Jamf Pro MDM",
+      "category": "MDM Coverage",
+      "query": "asset.OperatingSystem IN [\"iOS\", \"iPadOS\", \"macOS Sequoia\", \"macOS Sonoma\", \"macOS Tahoe\", \"macOS Ventura\"] and asset.Providers ISNOT \"Jamf Pro\" AND asset.Name STARTSWITH \"lsys\"",
+      "description": "Finds Apple assets that appear company-managed (lsys- prefix) but do not have Jamf Pro as a contributing source. These are the Macs and iPhones that slipped through enrollment — visible on the network but outside MDM governance.",
+      "bestUsedFor": "Missing MDM coverage and Apple fleet governance story — customers who assume all Apple devices are in Jamf.",
+      "tags": ["mdm", "jamf", "apple", "coverage", "governance"],
+      "requiresProviders": ["Jamf Pro"],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "windows-missing-mdm",
+      "title": "Windows Fleet Missing Microsoft Intune",
+      "category": "MDM Coverage",
+      "query": "asset.Providers NOTIN [\"Microsoft Intune\"] and asset.OperatingSystem IN [\"Windows 11\", \"Windows Server 2019\", \"Windows Server 2022\", \"Windows Server 2025\"] and asset.Name STARTSWITH \"lsys\"",
+      "description": "Finds Windows assets that appear company-managed (lsys- prefix) but do not have Microsoft Intune as a contributing source. These are the Windows machines outside policy enforcement — on the network but not enrolled.",
+      "bestUsedFor": "Missing MDM coverage and Windows fleet governance story — customers who assume all Windows devices are in Intune.",
+      "tags": ["mdm", "intune", "windows", "coverage", "governance"],
+      "requiresProviders": ["Microsoft Intune"],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "byod-network-layer",
+      "title": "BYOD Devices on Corporate Network",
+      "savedFilterName": "BYOD on Corporate Network",
+      "category": "Shadow IT",
+      "query": "asset.Providers IN [\"Cisco Meraki\", \"Juniper Mist\"] and asset.Name DOESNOTCONTAIN \"lsys\"",
+      "description": "Finds assets discovered on the wireless or network layer through Meraki or Mist whose names don't match the corporate naming convention — the clearest network-level signal of a personal device using the Corporate-BYOD SSID.",
+      "bestUsedFor": "BYOD and unmanaged-on-network visibility story — customers who want to see what non-corporate devices are touching the wireless infrastructure.",
+      "tags": ["byod", "shadow-it", "meraki", "mist", "wireless", "network"],
+      "requiresProviders": ["Cisco Meraki", "Juniper Mist"],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "cloud-correlation-vms",
+      "title": "Cloud Correlation Demo VMs",
+      "category": "Cloud & Infrastructure",
+      "query": "asset.Name IN [\"test-syslog-server\", \"svr-traffic-sim\", \"prod2-healthcheck\", \"awj-nova\", \"CIS Ubuntu (was nova-bastion-aws)\", \"demo-oregon-www\", \"www-east-01\", \"demo-bastion\", \"demo-dc2\", \"demo-dc1\", \"demo-cl5\", \"demo-cl4\", \"demo-cl3\", \"demo-cl2\", \"demo-cl1\"] and asset.Type = \"Virtual Machine\"",
+      "description": "Finds the curated VM set used to demonstrate cloud instances discovered live and enriched through additional sources. These specific VMs are part of the Luminary Systems demo environment and show cloud correlation working end to end.",
+      "bestUsedFor": "Cloud-correlation demo story using live discovery plus mocked enrichment — showing cloud assets pulled together across AWS, CrowdStrike, and ServiceNow.",
+      "tags": ["cloud", "demo", "vms", "correlation", "aws"],
+      "requiresProviders": [],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "windows-crowdstrike-missing-sn",
+      "title": "Windows CIs in CrowdStrike but Missing ServiceNow",
+      "savedFilterName": "Windows: CrowdStrike Not in ServiceNow",
+      "category": "CMDB Reconciliation",
+      "query": "asset.OperatingSystem CONTAINS \"Windows\" AND asset.Providers IN [\"CrowdStrike Falcon\"] AND asset.Providers ISNOT \"ServiceNow\"",
+      "description": "Finds Windows assets seen by CrowdStrike that do not have ServiceNow as a contributing source. Unlike the broad missing-from-ServiceNow filter, this requires CrowdStrike confirmation — so every result is a device you're already securing that your CMDB simply doesn't know about.",
+      "bestUsedFor": "CMDB reconciliation story — assets confirmed present via CrowdStrike but absent from ServiceNow, making the objection 'maybe it's not real' impossible.",
+      "tags": ["cmdb", "servicenow", "crowdstrike", "windows", "gap"],
+      "requiresProviders": ["CrowdStrike Falcon", "ServiceNow"],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "missing-from-servicenow-demo",
+      "title": "Assets Missing from ServiceNow (Demo Scoped)",
+      "savedFilterName": "Assets Missing ServiceNow (Demo)",
+      "category": "CMDB Reconciliation",
+      "query": "asset.Providers ISNOT \"ServiceNow\" AND asset.Name STARTSWITH \"lsys\"",
+      "description": "Finds any asset type that does not have ServiceNow as a contributing source, scoped to the Luminary Systems demo environment (lsys- prefix). Use this version in the API integrations demo to avoid noise from non-demo assets in the tenant.",
+      "bestUsedFor": "Broad CMDB completeness story in the API integrations demo — any demo asset type absent from ServiceNow, independent of ownership or endpoint tooling.",
+      "tags": ["cmdb", "servicenow", "coverage", "demo", "opener"],
+      "requiresProviders": ["ServiceNow"],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "windows-missing-crowdstrike",
+      "title": "Windows Devices Missing CrowdStrike",
+      "savedFilterName": "Windows Missing CrowdStrike",
+      "category": "Security Control Gaps",
+      "query": "asset.OperatingSystem CONTAINS \"Windows\" AND asset.Providers ISNOT \"CrowdStrike Falcon\" AND asset.Name STARTSWITH \"lsys\"",
+      "description": "Finds Windows assets that do not have CrowdStrike Falcon as a contributing source, surfacing endpoint detection coverage gaps in the Luminary Systems demo fleet.",
+      "bestUsedFor": "EDR coverage-gap story — Windows assets with no CrowdStrike agent present, exposing blind spots in endpoint detection.",
+      "tags": ["edr", "crowdstrike", "windows", "coverage-gap", "security"],
+      "requiresProviders": ["CrowdStrike Falcon"],
+      "source": "workbook",
+      "verified": "counted"
+    },
+    {
+      "id": "medical-devices-unexpected-vlan",
+      "title": "Medical / IoT Devices on Unexpected VLAN",
+      "savedFilterName": "IoT Devices on Unexpected VLAN",
+      "category": "IoT & OT Visibility",
+      "query": "asset.Category = \"IoT\"",
+      "description": "Finds IoT-type assets (medical devices and other unmanaged hardware) discovered on a VLAN outside their expected network segment. These devices can't run agents, so network-layer discovery is the only way to find them — and network segmentation is the only control available.",
+      "bestUsedFor": "IoT visibility and network-segmentation risk story — customers who need to know where medical or industrial devices are appearing on the network.",
+      "tags": ["iot", "medical", "vlan", "segmentation", "agentless"],
+      "requiresProviders": [],
+      "source": "workbook",
+      "verified": "counted"
+    }
+  ]
+}

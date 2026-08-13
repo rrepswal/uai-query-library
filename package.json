@@ -1,0 +1,22 @@
+{
+  "name": "infoblox-uai-srs-query-library",
+  "version": "0.1.0",
+  "description": "UAI SRS Hands-On Activity and API Integrations query library. Based on UAI Query Library by Ingmar VG (IngmarVG-IB).",
+  "type": "module",
+  "license": "MIT",
+  "author": "Infoblox SE Team",
+  "contributors": [
+    {
+      "name": "Ingmar VG",
+      "url": "https://github.com/IngmarVG-IB"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Infoblox-TME/infoblox-uai-srs-query-library.git"
+  },
+  "scripts": {
+    "build": "node build/build.mjs"
+  },
+  "private": true
+}
