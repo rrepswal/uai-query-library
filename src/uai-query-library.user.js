@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         UAI SRS Query Library
-// @namespace    https://github.com/Infoblox-TME/infoblox-uai-srs-query-library
+// @namespace    https://github.com/Infoblox-TME/uai-query-library
 // @version      __VERSION__
 // @description  Adds the UAI SRS Hands-On Activity and API Integrations queries to Infoblox UAI Asset Inventory. Based on Ingmar VG's UAI Query Library.
 // @author       Infoblox SE Team
@@ -8,10 +8,10 @@
 // @match        https://csp.infoblox.com/*
 // @grant        none
 // @run-at       document-idle
-// @homepageURL  https://github.com/Infoblox-TME/infoblox-uai-srs-query-library
-// @supportURL   https://github.com/Infoblox-TME/infoblox-uai-srs-query-library/issues
-// @updateURL    https://github.com/Infoblox-TME/infoblox-uai-srs-query-library/raw/main/dist/uai-query-library.user.js
-// @downloadURL  https://github.com/Infoblox-TME/infoblox-uai-srs-query-library/raw/main/dist/uai-query-library.user.js
+// @homepageURL  https://github.com/Infoblox-TME/uai-query-library
+// @supportURL   https://github.com/Infoblox-TME/uai-query-library/issues
+// @updateURL    https://github.com/Infoblox-TME/uai-query-library/raw/main/dist/uai-query-library.user.js
+// @downloadURL  https://github.com/Infoblox-TME/uai-query-library/raw/main/dist/uai-query-library.user.js
 // ==/UserScript==
 /* Based on UAI Query Library by Ingmar VG (https://github.com/IngmarVG-IB).
  * Architecture, build system, and UI are entirely his work.
