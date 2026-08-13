@@ -1,4 +1,4 @@
-# UAI SRS Query Library
+# UAI Query Library
 
 **19 ready-to-run queries from the UAI SRS Hands-On Activity and API Integrations demo materials — one click, no query syntax to learn.**
 
