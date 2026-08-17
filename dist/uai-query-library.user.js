@@ -462,7 +462,7 @@
   const NS = 'uaiql';
   const STORE_KEY = 'uaiql.local';
   const SAVED_FILTER_PREFIX = '[Library]';
-  const INVENTORY_PATH = /\/workspace\/assets\/details\//;
+  const INVENTORY_PATH = /\/workspace\/assets(?:\/(?:details|unified-details)\/|\?|$)/;
 
   /**
    * Saved Filter names are capped at 50 characters. Measured, not guessed: a
