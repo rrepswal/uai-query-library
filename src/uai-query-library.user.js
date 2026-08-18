@@ -383,7 +383,7 @@
   // ---------------------------------------------------------------------------
 
   const CSS = `
-  .${NS}-fab{position:fixed;right:22px;bottom:22px;z-index:2147483000;height:42px;padding:0 18px;
+  .${NS}-fab{position:fixed;right:22px;bottom:72px;z-index:2147483000;height:42px;padding:0 18px;
     border:0;border-radius:21px;background:#0d8b4d;color:#fff;font:600 13px/42px system-ui,-apple-system,sans-serif;
     cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.4)}
   .${NS}-fab:hover{background:#10a75d}
@@ -424,7 +424,7 @@
   .${NS}-btn.p:hover{background:#10a75d}
   .${NS}-foot{border-top:1px solid #2f353c;padding:10px 16px;display:flex;gap:8px;align-items:center;
     font-size:11.5px;color:#7d8892}
-  .${NS}-toast{position:fixed;bottom:78px;right:22px;z-index:2147483002;background:#0d1117;color:#e6e9ec;
+  .${NS}-toast{position:fixed;bottom:128px;right:22px;z-index:2147483002;background:#0d1117;color:#e6e9ec;
     padding:10px 14px;border-radius:6px;font:12.5px system-ui,sans-serif;max-width:400px;
     border:1px solid #3a4149;box-shadow:0 4px 16px rgba(0,0,0,.5)}
   `;
