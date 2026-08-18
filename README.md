@@ -19,7 +19,7 @@
 
 ### Step 2 — Install the Query Library
 
-**[⬇️ Click here to install](https://github.com/Infoblox-TME/uai-query-library/raw/main/dist/uai-query-library.user.js)**
+**[⬇️ Click here to install](https://github.com/rrepswal/uai-query-library/raw/main/dist/uai-query-library.user.js)**
 
 Your userscript extension will open an installation page. Click **Install**.
 
