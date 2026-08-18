@@ -13,9 +13,16 @@
 
 ### Step 1 — Install a userscript extension
 
-- **Chrome or Edge** → [Tampermonkey](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
+- **Chrome** → [Tampermonkey](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
+- **Edge** → [Tampermonkey](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd)
 - **Firefox** → [Violentmonkey](https://addons.mozilla.org/firefox/addon/violentmonkey/) or [Tampermonkey](https://addons.mozilla.org/firefox/addon/tampermonkey/)
 - **Safari** → [Userscripts](https://apps.apple.com/app/userscripts/id1463298887)
+
+> **Chrome only — two extra steps required after installing Tampermonkey:**
+> 1. Go to `chrome://extensions` and enable **Developer mode** (top-right toggle)
+> 2. Click **Details** on the Tampermonkey card → enable **Allow user scripts**
+>
+> Without both, the script installs but never runs. Edge, Firefox, and Safari do not require these steps.
 
 ### Step 2 — Install the Query Library
 
